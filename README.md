@@ -2,18 +2,20 @@ Unpacks a Docker image.
 
 ## Usage
 
-    usage: undocker.py [-h] [--ignore-errors] [--output OUTPUT] [--verbose]
+    usage: undocker.py [-h] [--ignore-errors] [--output OUTPUT] [--image IMAGE] [--verbose]
                        [--debug] [--list] [--layer LAYER]
-                       image
+                       [archive]
 
     positional arguments:
-      image
+      archive
 
     optional arguments:
       -h, --help            show this help message and exit
       --ignore-errors, -i   Ignore OS errors when extracting files
       --output OUTPUT, -o OUTPUT
                             Output directory (defaults to ".")
+      --image IMAGE, -s IMAGE
+                            Extract only the specified image spec
       --verbose, -v
       --debug, -d
       --list, --ls          List layers in an image
@@ -24,7 +26,7 @@ Unpacks a Docker image.
 
 Extract an entire image:
 
-    $ docker save busybox | undocker -i -o busybox busybox
+    $ docker save busybox | undocker -i -o busybox -s busybox
 
 The `-i` option is necessary here because I am not running as root,
 and the extract operation will fail when it attempts to create device
@@ -43,7 +45,7 @@ Extract only specific layers:
     $ docker save busybox |
       undocker -o busybox -v \
       -l 4986bf8c15363d1c5d15512d5266f8777bfba4974ac56e3270e7760f6f0a8125 \
-      busybox
+      -s busybox
     INFO:undocker:extracting image busybox (4986bf8c15363d1c5d15512d5266f8777bfba4974ac56e3270e7760f6f0a8125)
     INFO:undocker:extracting layer 4986bf8c15363d1c5d15512d5266f8777bfba4974ac56e3270e7760f6f0a8125
 

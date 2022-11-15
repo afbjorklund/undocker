@@ -28,6 +28,9 @@ def parse_args():
     p.add_argument('--output', '-o',
                    default='.',
                    help='Output directory (defaults to ".")')
+    p.add_argument('--image', '-s',
+                   default=None,
+                   help='Extract only the specified image spec')
     p.add_argument('--layers',
                    action='store_true',
                    help='List layers in an image')
@@ -51,7 +54,7 @@ def parse_args():
                    const=logging.DEBUG,
                    dest='loglevel')
 
-    p.add_argument('image', nargs='?')
+    p.add_argument('archive', nargs='?')
 
     p.set_defaults(level=logging.WARN)
     return p.parse_args()
@@ -96,7 +99,7 @@ def main():
     logging.basicConfig(level=args.loglevel)
 
     with tempfile.NamedTemporaryFile() as fd, (
-            open(args.image, 'rb') if args.image
+            open(args.archive, 'rb') if args.archive
             else io.open(sys.stdin.fileno(), 'rb')) as image:
         while True:
             data = image.read(8192)
@@ -117,6 +120,11 @@ def main():
 
             if args.image:
                 name, tag = parse_image_spec(args.image)
+            elif args.archive:  # legacy: match filename
+                # also handle names like busybox_latest.tar
+                image, ext = os.path.splitext(args.archive)
+                image = image.replace('_', ':')  # unescape
+                name, tag = parse_image_spec(image)
             elif len(repos) == 1:
                 name = list(repos.keys())[0]
                 tag = list(repos[name].keys())[0]
