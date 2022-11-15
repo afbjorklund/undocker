@@ -2,23 +2,30 @@ Unpacks a Docker image.
 
 ## Usage
 
-    usage: undocker.py [-h] [--ignore-errors] [--output OUTPUT] [--verbose]
-                       [--debug] [--list] [--layer LAYER]
-                       image
+```
+usage: undocker.py [-h] [--ignore-errors] [--output OUTPUT] [--layers]
+                   [--list] [--layer LAYER] [--no-whiteouts] [--verbose]
+                   [--debug]
+                   [image]
 
-    positional arguments:
-      image
+positional arguments:
+  image
 
-    optional arguments:
-      -h, --help            show this help message and exit
-      --ignore-errors, -i   Ignore OS errors when extracting files
-      --output OUTPUT, -o OUTPUT
-                            Output directory (defaults to ".")
-      --verbose, -v
-      --debug, -d
-      --list, --ls          List layers in an image
-      --layer LAYER, -l LAYER
-                            Extract only the specified layer
+optional arguments:
+  -h, --help            show this help message and exit
+  --ignore-errors, -i   Ignore OS errors when extracting files
+  --output OUTPUT, -o OUTPUT
+                        Output directory (defaults to ".")
+  --layers              List layers in an image
+  --list, --ls          List images/tags contained in archive
+  --layer LAYER, -l LAYER
+                        Extract only the specified layer
+  --no-whiteouts, -W    Do not process whiteout (.wh.*) files
+
+Logging options:
+  --verbose, -v
+  --debug, -d
+```
 
 ## Examples
 
@@ -32,7 +39,7 @@ nodes.
 
 List the layers in an image:
 
-    $ docker save busybox | undocker --list
+    $ docker save busybox | undocker --layers
     511136ea3c5a64f264b78b5433614aec563103b4d4702f3ba7d4d2698e22c158
     df7546f9f060a2268024c8a230d8639878585defcc1bc6f79d2728a13957871b
     ea13149945cb6b1e746bf28032f02e9b5a793523481a0a18645fc77ad53c4ea2
