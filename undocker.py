@@ -104,7 +104,7 @@ def main():
                 break
             fd.write(data)
         fd.seek(0)
-        with tarfile.TarFile(fileobj=fd) as img:
+        with tarfile.open(fileobj=fd) as img:
             repos = img.extractfile('repositories')
             repos = json.loads(repos.read().decode('utf-8'))
 
@@ -148,7 +148,7 @@ def main():
                     continue
 
                 LOG.info('extracting layer %s', id)
-                with tarfile.TarFile(
+                with tarfile.open(
                         fileobj=img.extractfile('%s/layer.tar' % id),
                         errorlevel=(0 if args.ignore_errors else 1)) as layer:
                     layer.extractall(path=args.output)
