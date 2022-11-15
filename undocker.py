@@ -105,33 +105,55 @@ def main():
             fd.write(data)
         fd.seek(0)
         with tarfile.TarFile(fileobj=fd) as img:
-            repos = img.extractfile('repositories')
-            repos = json.loads(repos.read().decode('utf-8'))
-
-            if args.list:
-                for name, tags in repos.items():
-                    print('%s: %s' % (
-                        name,
-                        ' '.join(tags)))
-                sys.exit(0)
-
-            if args.image:
-                name, tag = parse_image_spec(args.image)
-            elif len(repos) == 1:
-                name = list(repos.keys())[0]
-                tag = list(repos[name].keys())[0]
-            else:
-                LOG.error('No image name specified and multiple '
-                          'images contained in archive')
-                sys.exit(1)
-
             try:
-                top = repos[name][tag]
+                repos = img.extractfile('repositories')
+                repos = json.loads(repos.read().decode('utf-8'))
+
+                if args.list:
+                    for name, tags in repos.items():
+                        print('%s: %s' % (
+                            name,
+                            ' '.join(tags)))
+                    sys.exit(0)
+
+                if args.image:
+                    name, tag = parse_image_spec(args.image)
+                elif len(repos) == 1:
+                    name = list(repos.keys())[0]
+                    tag = list(repos[name].keys())[0]
+                else:
+                    LOG.error('No image name specified and multiple '
+                              'images contained in archive')
+                    sys.exit(1)
+
+                try:
+                    top = repos[name][tag]
+                except KeyError:
+                    LOG.error('failed to find image %s with tag %s',
+                              name,
+                              tag)
+                    sys.exit(1)
             except KeyError:
-                LOG.error('failed to find image %s with tag %s',
-                          name,
-                          tag)
-                sys.exit(1)
+                manifest = img.extractfile('manifest.json')
+                manifest = json.loads(manifest.read().decode('utf-8'))
+                assert(len(manifest) == 1)
+                assert(manifest[0]['RepoTags'] is None)
+                id = manifest[0]['Config'].split('.')[0]
+                top = manifest[0]['Layers'][0].split('/')[0]
+
+                if args.list:
+                    print(id)
+                    sys.exit(0)
+
+                if args.image:
+                    name = args.image
+                else:
+                    name = id
+
+                if name != id:
+                    LOG.error('failed to find image %s',
+                              id)
+                    sys.exit(1)
 
             LOG.info('extracting image %s (%s)', name, top)
             layers = list(find_layers(img, top))
