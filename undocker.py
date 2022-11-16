@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 from __future__ import print_function
 
@@ -45,6 +46,9 @@ def parse_args():
     p.add_argument('--files',
                    action='store_true',
                    help='List all files in an image')
+    p.add_argument('--tree',
+                   action='store_true',
+                   help='List files in a tree-like format')
     p.add_argument('--layer', '-l',
                    action='append',
                    help='Extract only the specified layer')
@@ -112,6 +116,43 @@ def du(members):
         else:
             size = tarinfo.size / 1024
         print("%d\t%s" % (size, tarinfo.name))
+
+# prefix components:
+space = '    '
+branch = '│   '
+# pointers:
+tee = '├── '
+last = '└── '
+
+# tree by rafaeldss
+def tree(paths, prefix):
+    pointers = [tee] * (len(paths) - 1) + [last]
+    names = list(paths.keys())
+    names.sort()
+    for pointer, path in zip(pointers, names):
+        yield prefix + pointer + path
+        if isinstance(paths[path], dict):
+            extension = branch if pointer == tee else space
+            for p in tree(paths[path], prefix=prefix+extension):
+                yield p
+
+def dt(members, report=True):
+    root = {}
+    dirs = files = 0
+    for tarinfo in members:
+        path = tarinfo.name
+        d = root
+        for name in path.split("/"):
+            d = d.setdefault(name, {})
+        if tarinfo.isdir():
+            dirs += 1
+        else:
+            files += 1
+    for line in tree(root, ""):
+        print(line)
+    if report:
+        print()
+        print("%s directories, %d files" % (dirs, files))
 
 def ls(members, verbose=True):
     for tarinfo in members:
@@ -185,7 +226,7 @@ def main():
                 print('\n'.join(reversed(layers)))
                 sys.exit(0)
 
-            if args.du or args.files:
+            if args.du or args.tree or args.files:
                 members = {}
                 order = {}
                 o = 0
@@ -226,6 +267,8 @@ def main():
                     m.append(t[1])
                 if args.du:
                     du(m)
+                elif args.tree:
+                    dt(m)
                 else:
                     ls(m)
                 sys.exit(0)
